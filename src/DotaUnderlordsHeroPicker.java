@@ -1,123 +1,123 @@
 import javafx.util.Pair;
 
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class DotaUnderlordsHeroPicker {
-    private ArrayList<Pair<Pair<ArrayList<SimpleEntry<HeroClass, Integer>>, ArrayList<Hero>>, Integer>> strategies = new ArrayList<>();
+    private ArrayList<Pair<Pair<Pair<ArrayList<HeroClass>, int[]>, ArrayList<Hero>>, Integer>> strategies = new ArrayList<>();
 
     public static void main(String[] args) {
         DotaUnderlordsHeroPicker dotaUnderlordsHeroPicker = new DotaUnderlordsHeroPicker();
 
         ArrayList<Hero> heroes = new ArrayList<>(Arrays.asList(Hero.values()));
         ArrayList<Hero> pickerList = new ArrayList<>();
-        ArrayList<SimpleEntry<HeroClass, Integer>> classes = new ArrayList<>();
-        ArrayList<SimpleEntry<HeroClass, Integer>> pickedStrategies = new ArrayList<>();
+        ArrayList<HeroClass> classes = new ArrayList<>();
+        ArrayList<HeroClass> pickedStrategies = new ArrayList<>();
+        int[] classesCounter = new int[27];
+        int[] pickedStrategiesCounter = new int[27];
 
         for (int i = 0; i < heroes.size() - 9; i++) {
             System.out.println((i + 1) + "/" + (heroes.size() - 9));
-            dotaUnderlordsHeroPicker.calculate(heroes, pickerList, classes, pickedStrategies, i, 0);
+            dotaUnderlordsHeroPicker.calculate(heroes, pickerList, classes, pickedStrategies, classesCounter, pickedStrategiesCounter, i, 0);
         }
 
         dotaUnderlordsHeroPicker.sortingStrategies();
         dotaUnderlordsHeroPicker.printing();
     }
 
-    private void calculate(final ArrayList<Hero> heroes, final ArrayList<Hero> pickerList, final ArrayList<SimpleEntry<HeroClass, Integer>> classes,
-                           final ArrayList<SimpleEntry<HeroClass, Integer>> pickedStrategies, int index, int strategySum) {
+    private void calculate(final ArrayList<Hero> heroes, final ArrayList<Hero> pickerList,
+                           final ArrayList<HeroClass> classes,
+                           final ArrayList<HeroClass> pickedStrategies,
+                           final int[] classesCounter,
+                           final int[] pickedStrategiesCounter, int index, int strategySum) {
 
         ArrayList<Hero> heroesCopy = new ArrayList<>(heroes);
         ArrayList<Hero> pickerListCopy = new ArrayList<>(pickerList);
-        ArrayList<SimpleEntry<HeroClass, Integer>> classesCopy = new ArrayList<>();
-        for (SimpleEntry<HeroClass, Integer> cl : classes) {
-            classesCopy.add(new SimpleEntry<>(cl.getKey(), cl.getValue()));
-        }
-        ArrayList<SimpleEntry<HeroClass, Integer>> pickedStrategiesCopy = new ArrayList<>();
-        for (SimpleEntry<HeroClass, Integer> ps : pickedStrategies) {
-            pickedStrategiesCopy.add(new SimpleEntry<>(ps.getKey(), ps.getValue()));
-        }
+        ArrayList<HeroClass> classesCopy = new ArrayList<>(classes);
+        ArrayList<HeroClass> pickedStrategiesCopy = new ArrayList<>(pickedStrategies);
+        int[] classesCounterCopy = classesCounter.clone();
+        int[] pickedStrategiesCounterCopy = pickedStrategiesCounter.clone();
 
         Hero addedHero = heroesCopy.remove(index);
         pickerListCopy.add(addedHero);
 
         HeroClass alliance = addedHero.getFirstClass();
-        strategySum += getClasses(alliance, classesCopy, pickedStrategiesCopy);
+        strategySum += getClasses(alliance, classesCopy, pickedStrategiesCopy, classesCounterCopy, pickedStrategiesCounterCopy);
         alliance = addedHero.getSecondClass();
-        strategySum += getClasses(alliance, classesCopy, pickedStrategiesCopy);
+        strategySum += getClasses(alliance, classesCopy, pickedStrategiesCopy, classesCounterCopy, pickedStrategiesCounterCopy);
         alliance = addedHero.getThirdClass();
         if (alliance != null) {
-            strategySum += getClasses(alliance, classesCopy, pickedStrategiesCopy);
+            strategySum += getClasses(alliance, classesCopy, pickedStrategiesCopy, classesCounterCopy, pickedStrategiesCounterCopy);
         }
 
         if (pickerList.size() < 9) {
             for (int i = index; i < heroesCopy.size() + pickerListCopy.size() - 9; i++) {
-                calculate(heroesCopy, pickerListCopy, classesCopy, pickedStrategiesCopy, i, strategySum);
+                calculate(heroesCopy, pickerListCopy, classesCopy, pickedStrategiesCopy, classesCounterCopy, pickedStrategiesCounterCopy, i, strategySum);
             }
         } else {
-            sortAndAddMainStrategy(pickerListCopy, pickedStrategiesCopy, strategySum);
+            sortAndAddMainStrategy(pickerListCopy, pickedStrategiesCopy, pickedStrategiesCounterCopy, strategySum);
         }
     }
 
-    private int getClasses(HeroClass alliance, ArrayList<SimpleEntry<HeroClass, Integer>> classesCopy, ArrayList<SimpleEntry<HeroClass, Integer>> pickedStrategiesCopy) {
+    private int getClasses(HeroClass alliance, ArrayList<HeroClass> classesCopy, ArrayList<HeroClass> pickedStrategiesCopy,
+                           int[] classesCounter, int[] pickedStrategiesCounter) {
         int strategySum = 0;
-        int ind = -1;
-        int i = 0;
-        for (SimpleEntry<HeroClass, Integer> a : classesCopy) {
-            if (a.getKey() == alliance) {
-                ind = i;
-                break;
-            }
-            i++;
-        }
+        int ind = classesCopy.indexOf(alliance);
         int minHeroesForAlliance = alliance.getNumberOfHeroesForLevelOne();
 
         if (ind != -1) {
-            SimpleEntry<HeroClass, Integer> a = classesCopy.get(ind);
-            int numberOfCurrentClass = a.getValue() + 1;
-            a.setValue(numberOfCurrentClass);
+            int numberOfCurrentClass = classesCounter[ind + 1] + 1;
+            classesCounter[ind + 1] = numberOfCurrentClass;
             if (numberOfCurrentClass > minHeroesForAlliance) {
                 strategySum += 1;
-                for (SimpleEntry<HeroClass, Integer> se : pickedStrategiesCopy) {
-                    if (se.getKey() == alliance) {
-                        se.setValue(numberOfCurrentClass);
-                        break;
-                    }
-                }
+                pickedStrategiesCounter[pickedStrategiesCopy.indexOf(alliance) + 1] = numberOfCurrentClass;
             } else if (numberOfCurrentClass == minHeroesForAlliance) {
                 strategySum += numberOfCurrentClass;
-                pickedStrategiesCopy.add(a);
+                pickedStrategiesCopy.add(alliance);
+                pickedStrategiesCounter[0]++;
+                pickedStrategiesCounter[pickedStrategiesCounter[0]] = numberOfCurrentClass;
             }
         } else {
-            SimpleEntry<HeroClass, Integer> a = new SimpleEntry<>(alliance, 1);
-            classesCopy.add(a);
+            classesCopy.add(alliance);
+            classesCounter[0]++;
+            classesCounter[classesCounter[0]] = 1;
             if (minHeroesForAlliance == 1) {
                 strategySum += 1;
-                pickedStrategiesCopy.add(a);
+                pickedStrategiesCopy.add(alliance);
+                pickedStrategiesCounter[0]++;
+                pickedStrategiesCounter[pickedStrategiesCounter[0]] = 1;
             }
         }
 
         return strategySum;
     }
 
-    private void sortAndAddMainStrategy(ArrayList<Hero> pickerListCopy, ArrayList<SimpleEntry<HeroClass, Integer>> pickedStrategies, int strategySum) {
+    private void sortAndAddMainStrategy(ArrayList<Hero> pickerListCopy, ArrayList<HeroClass> pickedStrategies,
+                                        int[] pickedStrategiesCounter, int strategySum) {
         if (pickedStrategies.size() > 1 && strategySum > 20) {
-            pickedStrategies.sort((SimpleEntry<HeroClass, Integer> o1, SimpleEntry<HeroClass, Integer> o2) -> o2.getValue() - o1.getValue());
-            strategies.add(new Pair<>(new Pair<>(pickedStrategies, pickerListCopy), strategySum));
+            /*
+            ArrayList<Integer> indexes = new ArrayList<>();
+            for (int i = 0; i < pickedStrategies.size(); i++) {
+                indexes.add(i);
+            }
+            indexes.sort((Integer o1, Integer o2) -> pickedStrategiesCounter[o2] - pickedStrategiesCounter[o1]);*/
+            pickedStrategies.sort((HeroClass o1, HeroClass o2) -> pickedStrategiesCounter[pickedStrategies.indexOf(o2) + 1] - pickedStrategiesCounter[pickedStrategies.indexOf(o1) + 1]);
+            strategies.add(new Pair<>(new Pair<>(new Pair<>(pickedStrategies, pickedStrategiesCounter), pickerListCopy), strategySum));
         }
     }
 
     private void sortingStrategies() {
-        strategies.sort((Pair<Pair<ArrayList<SimpleEntry<HeroClass, Integer>>, ArrayList<Hero>>, Integer> o1,
-                         Pair<Pair<ArrayList<SimpleEntry<HeroClass, Integer>>, ArrayList<Hero>>, Integer> o2) ->
+        strategies.sort((Pair<Pair<Pair<ArrayList<HeroClass>, int[]>, ArrayList<Hero>>, Integer> o1,
+                         Pair<Pair<Pair<ArrayList<HeroClass>, int[]>, ArrayList<Hero>>, Integer> o2) ->
                 o2.getValue() - o1.getValue());
     }
 
     private void printing() {
-        for (Pair<Pair<ArrayList<SimpleEntry<HeroClass, Integer>>, ArrayList<Hero>>, Integer> strategy : strategies) {
+        for (Pair<Pair<Pair<ArrayList<HeroClass>, int[]>, ArrayList<Hero>>, Integer> strategy : strategies) {
             System.out.print(strategy.getValue() + ") ");
-            for (SimpleEntry<HeroClass, Integer> pickedStrategies : strategy.getKey().getKey()) {
-                System.out.print(pickedStrategies.getKey().toString() + "(" + pickedStrategies.getValue() + ") ");
+            Pair<ArrayList<HeroClass>, int[]> a = strategy.getKey().getKey();
+            for (int i = 0; i < a.getKey().size(); i++) {
+                System.out.print(a.getKey().get(i).toString() + "(" + a.getValue()[i + 1] + ") ");
             }
             System.out.print(":");
             for (Hero pickedHeroes : strategy.getKey().getValue()) {
