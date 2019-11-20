@@ -95,13 +95,13 @@ public class DotaUnderlordsHeroPicker {
     private void sortAndAddMainStrategy(ArrayList<Hero> pickerListCopy, ArrayList<HeroClass> pickedStrategies,
                                         int[] pickedStrategiesCounter, int strategySum) {
         if (pickedStrategies.size() > 1 && strategySum > 20) {
-            /*
-            ArrayList<Integer> indexes = new ArrayList<>();
-            for (int i = 0; i < pickedStrategies.size(); i++) {
-                indexes.add(i);
+            int i = 0;
+            for (HeroClass hc : pickedStrategies) {
+                hc.setCurrentCount(pickedStrategiesCounter[i + 1]);
+                i++;
             }
-            indexes.sort((Integer o1, Integer o2) -> pickedStrategiesCounter[o2] - pickedStrategiesCounter[o1]);*/
-            pickedStrategies.sort((HeroClass o1, HeroClass o2) -> pickedStrategiesCounter[pickedStrategies.indexOf(o2) + 1] - pickedStrategiesCounter[pickedStrategies.indexOf(o1) + 1]);
+            pickedStrategies.sort((HeroClass o1, HeroClass o2) -> o2.getCurrentCount() - o1.getCurrentCount());
+            Arrays.sort(pickedStrategiesCounter, 1, pickedStrategiesCounter[0] + 1);
             strategies.add(new Pair<>(new Pair<>(new Pair<>(pickedStrategies, pickedStrategiesCounter), pickerListCopy), strategySum));
         }
     }
@@ -116,8 +116,8 @@ public class DotaUnderlordsHeroPicker {
         for (Pair<Pair<Pair<ArrayList<HeroClass>, int[]>, ArrayList<Hero>>, Integer> strategy : strategies) {
             System.out.print(strategy.getValue() + ") ");
             Pair<ArrayList<HeroClass>, int[]> a = strategy.getKey().getKey();
-            for (int i = 0; i < a.getKey().size(); i++) {
-                System.out.print(a.getKey().get(i).toString() + "(" + a.getValue()[i + 1] + ") ");
+            for (int i = 0, lt = a.getKey().size(); i < lt; i++) {
+                System.out.print(a.getKey().get(i).toString() + "(" + a.getValue()[lt - i] + ") ");
             }
             System.out.print(":");
             for (Hero pickedHeroes : strategy.getKey().getValue()) {

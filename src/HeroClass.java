@@ -29,6 +29,7 @@ public enum HeroClass {
     private final int numberOfHeroesForLevelOne;
     private final int numberOfHeroesForLevelTwo;
     private final int numberOfHeroesForLevelThree;
+    private int currentCount;
 
     HeroClass(int numberOfHeroesForLevelOne, int numberOfHeroesForLevelTwo, int numberOfHeroesForLevelThree) {
         this.numberOfHeroesForLevelOne = numberOfHeroesForLevelOne;
@@ -46,6 +47,14 @@ public enum HeroClass {
         this.numberOfHeroesForLevelOne = numberOfHeroesForLevelOne;
         this.numberOfHeroesForLevelTwo = -1;
         this.numberOfHeroesForLevelThree = -1;
+    }
+
+    public int getCurrentCount() {
+        return currentCount;
+    }
+
+    public void setCurrentCount(int currentCount) {
+        this.currentCount = currentCount;
     }
 
     public int getNumberOfHeroesForLevelOne() {
