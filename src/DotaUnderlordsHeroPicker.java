@@ -5,6 +5,8 @@ import java.util.Arrays;
 
 public class DotaUnderlordsHeroPicker {
     private ArrayList<Pair<Pair<Pair<ArrayList<HeroClass>, int[]>, ArrayList<Hero>>, Integer>> strategies = new ArrayList<>();
+    private int maxClassesCounter = 0;
+    private int maxStrategiesCounter = 0;
 
     public static void main(String[] args) {
         DotaUnderlordsHeroPicker dotaUnderlordsHeroPicker = new DotaUnderlordsHeroPicker();
@@ -16,12 +18,19 @@ public class DotaUnderlordsHeroPicker {
         int[] classesCounter = new int[27];
         int[] pickedStrategiesCounter = new int[27];
 
+        double fullTime = 0.0;
         for (int i = 0; i < heroes.size() - 9; i++) {
-            System.out.println((i + 1) + "/" + (heroes.size() - 9));
+            System.out.print((i + 1) + "/" + (heroes.size() - 9) + " - ");
+            long startTime = System.nanoTime();
             dotaUnderlordsHeroPicker.calculate(heroes, pickerList, classes, pickedStrategies, classesCounter, pickedStrategiesCounter, i, 0);
+            double partTime = (double) (System.nanoTime() - startTime) / 100000000.0;
+            double estimatedTime = (double) Math.round(partTime) / 10.0;
+            fullTime += partTime / 10.0;
+            System.out.println(estimatedTime);
         }
 
         dotaUnderlordsHeroPicker.sortingStrategies();
+        System.out.println("Время выполнения - " + (double) Math.round(fullTime * 10.0) / 10.0);
         dotaUnderlordsHeroPicker.printing();
     }
 
@@ -41,20 +50,25 @@ public class DotaUnderlordsHeroPicker {
         Hero addedHero = heroesCopy.remove(index);
         pickerListCopy.add(addedHero);
 
-        HeroClass alliance = addedHero.getFirstClass();
-        strategySum += getClasses(alliance, classesCopy, pickedStrategiesCopy, classesCounterCopy, pickedStrategiesCounterCopy);
-        alliance = addedHero.getSecondClass();
-        strategySum += getClasses(alliance, classesCopy, pickedStrategiesCopy, classesCounterCopy, pickedStrategiesCounterCopy);
-        alliance = addedHero.getThirdClass();
+        strategySum += getClasses(addedHero.getFirstClass(), classesCopy, pickedStrategiesCopy, classesCounterCopy, pickedStrategiesCounterCopy);
+        strategySum += getClasses(addedHero.getSecondClass(), classesCopy, pickedStrategiesCopy, classesCounterCopy, pickedStrategiesCounterCopy);
+
+        HeroClass alliance = addedHero.getThirdClass();
         if (alliance != null) {
             strategySum += getClasses(alliance, classesCopy, pickedStrategiesCopy, classesCounterCopy, pickedStrategiesCounterCopy);
         }
 
-        if (pickerList.size() < 9) {
+        if (pickerListCopy.size() < 10) {
             for (int i = index; i < heroesCopy.size() + pickerListCopy.size() - 9; i++) {
                 calculate(heroesCopy, pickerListCopy, classesCopy, pickedStrategiesCopy, classesCounterCopy, pickedStrategiesCounterCopy, i, strategySum);
             }
         } else {
+            if (maxClassesCounter < classesCounterCopy[0]) {
+                maxClassesCounter = classesCounterCopy[0];
+            }
+            if (maxStrategiesCounter < pickedStrategiesCounterCopy[0]) {
+                maxStrategiesCounter = pickedStrategiesCounterCopy[0];
+            }
             sortAndAddMainStrategy(pickerListCopy, pickedStrategiesCopy, pickedStrategiesCounterCopy, strategySum);
         }
     }
@@ -94,7 +108,7 @@ public class DotaUnderlordsHeroPicker {
 
     private void sortAndAddMainStrategy(ArrayList<Hero> pickerListCopy, ArrayList<HeroClass> pickedStrategies,
                                         int[] pickedStrategiesCounter, int strategySum) {
-        if (pickedStrategies.size() > 1 && strategySum > 20) {
+        if (strategySum > 20) {
             int i = 0;
             for (HeroClass hc : pickedStrategies) {
                 hc.setCurrentCount(pickedStrategiesCounter[i + 1]);
@@ -113,15 +127,17 @@ public class DotaUnderlordsHeroPicker {
     }
 
     private void printing() {
+        System.out.println("Макс количество классов: " + maxClassesCounter);
+        System.out.println("Макс количество стратегий: " + maxStrategiesCounter);
         for (Pair<Pair<Pair<ArrayList<HeroClass>, int[]>, ArrayList<Hero>>, Integer> strategy : strategies) {
             System.out.print(strategy.getValue() + ") ");
             Pair<ArrayList<HeroClass>, int[]> a = strategy.getKey().getKey();
             for (int i = 0, lt = a.getKey().size(); i < lt; i++) {
                 System.out.print(a.getKey().get(i).toString() + "(" + a.getValue()[lt - i] + ") ");
             }
-            System.out.print(":");
+            System.out.print(": ");
             for (Hero pickedHeroes : strategy.getKey().getValue()) {
-                System.out.print(pickedHeroes.toString() + ", ");
+                System.out.print(pickedHeroes.toString() + " ");
             }
             System.out.println();
         }
